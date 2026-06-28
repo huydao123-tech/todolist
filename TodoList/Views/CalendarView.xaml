@@ -1,0 +1,162 @@
+<UserControl x:Class="TodoList.Views.CalendarView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:viewmodels="clr-namespace:TodoList.ViewModels"
+             mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance viewmodels:CalendarViewModel}"
+             d:DesignHeight="800" d:DesignWidth="1000" Background="White">
+    <UserControl.Resources>
+        <!-- Bộ Converter dùng chung từ App.xaml (nếu có) -->
+    </UserControl.Resources>
+    
+    <Grid Margin="40,20,40,20" MaxWidth="900">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- 1. Header & Navigation -->
+        <Grid Grid.Row="0" Margin="0,0,0,20">
+            <!-- Center Title -->
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="Upcoming" FontSize="20" FontWeight="Bold" Foreground="#1F2024" HorizontalAlignment="Center"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding MonthRangeDisplay}" FontSize="12" Foreground="#8B8D98"/>
+                    <materialDesign:PackIcon Kind="ChevronDown" Width="14" Height="14" Foreground="#8B8D98" VerticalAlignment="Center" Margin="2,0,0,0"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Right Nav Buttons -->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <Button Style="{StaticResource MaterialDesignOutlinedButton}" Width="32" Height="32" Padding="0"
+                        Foreground="#8B8D98" BorderBrush="#E2E8F0"
+                        Command="{Binding PreviousWeekCommand}">
+                    <materialDesign:PackIcon Kind="ChevronLeft" Width="20" Height="20"/>
+                </Button>
+                <Button Style="{StaticResource MaterialDesignOutlinedButton}" Content="Today" Height="32" Padding="15,0"
+                        Foreground="#1F2024" BorderBrush="#E2E8F0" Margin="5,0" FontSize="12"
+                        Command="{Binding GoToTodayCommand}"/>
+                <Button Style="{StaticResource MaterialDesignOutlinedButton}" Width="32" Height="32" Padding="0"
+                        Foreground="#8B8D98" BorderBrush="#E2E8F0"
+                        Command="{Binding NextWeekCommand}">
+                    <materialDesign:PackIcon Kind="ChevronRight" Width="20" Height="20"/>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- 2. Horizontal Days Bar -->
+        <Border Grid.Row="1" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="0,0,0,15" Margin="0,0,0,20">
+            <ItemsControl ItemsSource="{Binding TopWeekDays}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="7"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <TextBlock Text="{Binding DayName}" FontSize="13" VerticalAlignment="Center" Margin="0,0,5,0">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="#8B8D98"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsToday}" Value="True">
+                                                <Setter Property="Foreground" Value="#DC2626"/>
+                                                <Setter Property="FontWeight" Value="SemiBold"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            
+                            <Border CornerRadius="4" Padding="4,2">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsToday}" Value="True">
+                                                <Setter Property="Background" Value="#DC2626"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="{Binding DayNumber}" FontSize="13">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#8B8D98"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsToday}" Value="True">
+                                                    <Setter Property="Foreground" Value="White"/>
+                                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Border>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </Border>
+
+        <!-- 3. Vertical Agenda List -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Padding="0,0,10,0">
+            <ItemsControl ItemsSource="{Binding AgendaDays}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Margin="0,0,0,35">
+                            <!-- Day Header -->
+                            <TextBlock Text="{Binding DisplayDate}" FontSize="14" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,15"/>
+
+                            <!-- Tasks Card (Only show if there are tasks) -->
+                            <Border Background="#FAFAFA" CornerRadius="8" Margin="0,0,0,15">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Tasks.Count}" Value="0">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                
+                                <ItemsControl ItemsSource="{Binding Tasks}" Margin="0,10">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="15,4">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                
+                                                <!-- Left priority strip -->
+                                                <Border Grid.Column="0" Width="4" CornerRadius="2" Margin="0,0,10,0"
+                                                        Background="{Binding Priority, Converter={StaticResource PriorityToFg}, FallbackValue=#5E40DF}"/>
+                                                
+                                                <!-- Task Info -->
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding TimeRangeDisplay}" FontSize="13" Foreground="#8B8D98" Margin="0,0,10,0" Width="80"/>
+                                                    <TextBlock Text="{Binding Title}" FontSize="13" Foreground="#1F2024" TextWrapping="Wrap"/>
+                                                    <TextBlock Text="{Binding Priority, StringFormat=' ({0})'}" FontSize="12" FontWeight="SemiBold" Margin="5,0,0,0"
+                                                               Foreground="{Binding Priority, Converter={StaticResource PriorityToFg}, FallbackValue=#8B8D98}"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Border>
+
+                            <!-- Nút Add task đã được gỡ bỏ theo yêu cầu -->
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

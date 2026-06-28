@@ -1,0 +1,21 @@
+## Build outputs
+bin/
+obj/
+[Bb]in/
+[Oo]bj/
+
+## IDE configs
+.vs/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+## Secrets and credentials
+**/credentials.json
+appsettings.json
+
+## Logs and temporary files
+*.log
+**/conversation_history.*

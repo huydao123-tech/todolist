@@ -1,0 +1,43 @@
+<Application x:Class="TodoList.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:TodoList"
+             xmlns:viewmodels="clr-namespace:TodoList.ViewModels"
+             xmlns:views="clr-namespace:TodoList.Views"
+             xmlns:converters="clr-namespace:TodoList.Converters"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <materialDesign:BundledTheme BaseTheme="Light" PrimaryColor="DeepPurple" SecondaryColor="Indigo" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Converters dùng toàn ứng dụng -->
+            <converters:StatusToBoolConverter              x:Key="StatusToBoolConverter"/>
+            <converters:PriorityToBackgroundConverter      x:Key="PriorityToBg"/>
+            <converters:PriorityToForegroundConverter      x:Key="PriorityToFg"/>
+            <converters:IntEqualConverter                  x:Key="IntEqualConverter"/>
+            <converters:StringEqualConverter               x:Key="StringEqualConverter"/>
+            <BooleanToVisibilityConverter                  x:Key="BooleanToVisibilityConverter"/>
+
+            <!-- DataTemplates cho Navigation -->
+            <DataTemplate DataType="{x:Type viewmodels:DashboardViewModel}">
+                <views:DashboardView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type viewmodels:CalendarViewModel}">
+                <views:CalendarView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type viewmodels:CreateTaskViewModel}">
+                <views:CreateTaskView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type viewmodels:TaskDetailDialogViewModel}">
+                <views:TaskDetailDialog />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type viewmodels:EisenhowerViewModel}">
+                <views:EisenhowerView />
+            </DataTemplate>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
+
