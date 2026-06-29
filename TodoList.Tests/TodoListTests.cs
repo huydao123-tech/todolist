@@ -10,10 +10,22 @@ using TodoList.Services;
 using TodoList.ViewModels;
 using Xunit;
 
+[assembly: CollectionBehavior(DisableTestParallelization = true)]
+
 namespace TodoList.Tests
 {
-    public class TodoListTests
+    public class TodoListTests : IDisposable
     {
+        public TodoListTests()
+        {
+            App.CurrentUser = null;
+        }
+
+        public void Dispose()
+        {
+            App.CurrentUser = null;
+        }
+
         private IDbContextFactory<AppDbContext> CreateInMemoryDbContextFactory()
         {
             var options = new DbContextOptionsBuilder<AppDbContext>()
