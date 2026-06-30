@@ -74,7 +74,7 @@
                 
                 <Button Grid.Column="1" Margin="20,0,0,0"
                         Command="{Binding CaptureIdeaCommand}"
-                        Style="{StaticResource MaterialDesignFloatingActionAccentButton}"
+                        Style="{StaticResource MaterialDesignFloatingActionButton}"
                         Background="#5E40DF" BorderBrush="#5E40DF"
                         Width="50" Height="50" VerticalAlignment="Bottom">
                     <materialDesign:PackIcon Kind="Send" Width="24" Height="24" />

@@ -533,7 +533,7 @@
 
             <!-- ── SURPRISE ME (RANDOMIZER) FAB ── -->
             <Button Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,0,0"
-                    Style="{StaticResource MaterialDesignFloatingActionAccentButton}"
+                    Style="{StaticResource MaterialDesignFloatingActionButton}"
                     Command="{Binding SurpriseMeCommand}"
                     Background="#F59E0B" BorderBrush="#F59E0B" Foreground="White"
                     Width="60" Height="60" ToolTip="Tê liệt quyết định? Bốc ngẫu nhiên 1 việc để làm!">
