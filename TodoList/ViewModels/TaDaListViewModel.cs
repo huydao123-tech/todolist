@@ -26,7 +26,7 @@ public partial class TaDaListViewModel : ObservableObject, IRecipient<TaskDataCh
     public TaDaListViewModel(ITaskService taskService)
     {
         _taskService = taskService;
-        WeakReferenceMessenger.Default.Register(this);
+        WeakReferenceMessenger.Default.Register<TaskDataChangedMessage>(this);
     }
 
     public async Task LoadDataAsync()

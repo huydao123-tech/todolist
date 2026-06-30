@@ -21,6 +21,16 @@ public partial class App : Application
 
     public App()
     {
+        this.DispatcherUnhandledException += (s, e) => 
+        {
+            File.AppendAllText("crash.txt", $"[Dispatcher] {e.Exception}\n");
+            e.Handled = true; // Ngăn app bị out để dễ debug
+        };
+        AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+        {
+            File.AppendAllText("crash.txt", $"[AppDomain] {e.ExceptionObject}\n");
+        };
+
         _host = Host.CreateDefaultBuilder()
             .ConfigureAppConfiguration((context, builder) =>
             {

@@ -24,7 +24,7 @@ public partial class MindSandboxViewModel : ObservableObject, IRecipient<TaskDat
     public MindSandboxViewModel(ITaskService taskService)
     {
         _taskService = taskService;
-        WeakReferenceMessenger.Default.Register(this);
+        WeakReferenceMessenger.Default.Register<TaskDataChangedMessage>(this);
     }
 
     public async Task LoadIdeasAsync()

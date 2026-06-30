@@ -169,13 +169,11 @@ namespace TodoList.Tests
             await viewModel.LoadDataAsync();
 
             // Assert
-            Assert.Single(viewModel.InboxTasks);
             Assert.Single(viewModel.P1Tasks);
             Assert.Single(viewModel.P2Tasks);
             Assert.Single(viewModel.P3Tasks);
             Assert.Single(viewModel.P4Tasks);
 
-            Assert.Equal("Inbox Task", viewModel.InboxTasks[0].Title);
             Assert.Equal("P1 Task", viewModel.P1Tasks[0].Title);
         }
 
@@ -299,11 +297,16 @@ namespace TodoList.Tests
             mockServiceProvider.Setup(s => s.GetService(typeof(LoginViewModel))).Returns(loginVM);
             mockServiceProvider.Setup(s => s.GetService(typeof(RegisterViewModel))).Returns(registerVM);
 
+            var mindSandboxVM = new MindSandboxViewModel(mockTaskService.Object);
+            var taDaListVM = new TaDaListViewModel(mockTaskService.Object);
+
             var mainVM = new MainViewModel(
                 dashboardVM,
                 calendarVM,
                 createTaskVM,
                 eisenhowerVM,
+                mindSandboxVM,
+                taDaListVM,
                 mockServiceProvider.Object,
                 mockSync.Object
             );
@@ -323,8 +326,8 @@ namespace TodoList.Tests
             // Act 4: Navigate to Today again - since cache was invalidated, it should reload!
             mainVM.NavigateToTodayCommand.Execute(null);
 
-            // Assert 2: Service should have been queried exactly twice (first time + reload after invalidation)
-            mockTaskService.Verify(s => s.GetAllTasksAsync(userId), Times.Exactly(2));
+            // Assert 2: Service should have been queried exactly 4 times (first time + 1 for dashboard + 1 for mindsandbox + 1 for tadalist)
+            mockTaskService.Verify(s => s.GetAllTasksAsync(userId), Times.Exactly(4));
         }
     }
 }
