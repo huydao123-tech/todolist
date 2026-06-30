@@ -40,6 +40,10 @@ public class TaskItem
     /// </summary>
     public EisenhowerQuadrant Quadrant { get; set; } = EisenhowerQuadrant.Inbox;
     
+    // Thuộc tính công việc lặp lại
+    public bool IsRecurring { get; set; } = false;
+    public string RecurrenceInterval { get; set; } = "None"; // None, Daily, Weekly, Monthly
+
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? DeletedAt { get; set; }
     

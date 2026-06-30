@@ -1,10 +1,14 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using TodoList.Messages;
 using TodoList.Models;
 using TodoList.Services;
 
@@ -18,14 +22,22 @@ public partial class EisenhowerViewModel : ObservableObject
     private const int P1_WIP_LIMIT = 5;
 
     // ===== Các danh sách công việc theo vùng =====
-    [ObservableProperty] private ObservableCollection<TaskItem> _inboxTasks    = new();
     [ObservableProperty] private ObservableCollection<TaskItem> _p1Tasks       = new();
     [ObservableProperty] private ObservableCollection<TaskItem> _p2Tasks       = new();
     [ObservableProperty] private ObservableCollection<TaskItem> _p3Tasks       = new();
     [ObservableProperty] private ObservableCollection<TaskItem> _p4Tasks       = new();
 
-    // ===== Brain Dump =====
-    [ObservableProperty] private string _newInboxTitle = string.Empty;
+    // ===== Input Fields cho từng ô =====
+    [ObservableProperty] private string _newP1Title = string.Empty;
+    [ObservableProperty] private string _newP2Title = string.Empty;
+    [ObservableProperty] private string _newP3Title = string.Empty;
+    [ObservableProperty] private string _newP4Title = string.Empty;
+
+    // ===== Recurring Toggles cho từng ô =====
+    [ObservableProperty] private bool _isP1Recurring = false;
+    [ObservableProperty] private bool _isP2Recurring = false;
+    [ObservableProperty] private bool _isP3Recurring = false;
+    [ObservableProperty] private bool _isP4Recurring = false;
 
     // ===== WIP Limit Warning =====
     [ObservableProperty] private bool   _isP1Overloaded;
@@ -53,41 +65,54 @@ public partial class EisenhowerViewModel : ObservableObject
     // Tab switcher: 0 = Matrix, 1 = Analytics
     [ObservableProperty] private int _selectedTabIndex;
 
+    private bool _isDataLoaded;
+    private readonly SemaphoreSlim _loadLock = new(1, 1);
+
+    public void InvalidateCache()
+    {
+        _isDataLoaded = false;
+    }
+
     public EisenhowerViewModel(ITaskService taskService)
     {
         _taskService = taskService;
-        _ = LoadDataAsync();
     }
 
     // ───────────────────────────────────────────────────────────
     //  DATA LOADING
     // ───────────────────────────────────────────────────────────
 
-    public async Task LoadDataAsync()
+    public async Task LoadDataAsync(bool forceReload = true)
     {
+        if (!forceReload && _isDataLoaded) return;
+        await _loadLock.WaitAsync();
         try
         {
-            var all = await _taskService.GetAllTasksAsync(App.CurrentUser?.Id ?? App.DefaultUserId);
-            var active = all.Where(t => !t.DeletedAt.HasValue).ToList();
+            if (!forceReload && _isDataLoaded) return;
 
-            InboxTasks = new ObservableCollection<TaskItem>(
-                active.Where(t => t.Quadrant == EisenhowerQuadrant.Inbox));
-            P1Tasks = new ObservableCollection<TaskItem>(
-                active.Where(t => t.Quadrant == EisenhowerQuadrant.P1_Do));
-            P2Tasks = new ObservableCollection<TaskItem>(
-                active.Where(t => t.Quadrant == EisenhowerQuadrant.P2_Schedule));
-            P3Tasks = new ObservableCollection<TaskItem>(
-                active.Where(t => t.Quadrant == EisenhowerQuadrant.P3_Delegate));
-            P4Tasks = new ObservableCollection<TaskItem>(
-                active.Where(t => t.Quadrant == EisenhowerQuadrant.P4_Eliminate));
+            var all = await _taskService.GetAllTasksAsync(App.CurrentUser?.Id ?? App.DefaultUserId);
+            var active = all.Where(t => !t.DeletedAt.HasValue && t.Quadrant != EisenhowerQuadrant.Inbox)
+                            .GroupBy(t => t.Title.Trim(), StringComparer.OrdinalIgnoreCase)
+                            .Select(g => g.OrderByDescending(t => t.DueDate ?? DateTime.MinValue).First())
+                            .ToList();
+
+            P1Tasks = new ObservableCollection<TaskItem>(active.Where(t => t.Quadrant == EisenhowerQuadrant.P1_Do));
+            P2Tasks = new ObservableCollection<TaskItem>(active.Where(t => t.Quadrant == EisenhowerQuadrant.P2_Schedule));
+            P3Tasks = new ObservableCollection<TaskItem>(active.Where(t => t.Quadrant == EisenhowerQuadrant.P3_Delegate));
+            P4Tasks = new ObservableCollection<TaskItem>(active.Where(t => t.Quadrant == EisenhowerQuadrant.P4_Eliminate));
 
             UpdateP1WipStatus();
             UpdateP2Suggestion();
             UpdateAnalytics(active);
+            _isDataLoaded = true;
         }
         catch (Exception ex)
         {
             MessageBox.Show($"Lỗi tải dữ liệu:\n{ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            _loadLock.Release();
         }
     }
 
@@ -180,31 +205,159 @@ public partial class EisenhowerViewModel : ObservableObject
         }
     }
 
+    private static void ReplaceCollection(ObservableCollection<TaskItem> target, IEnumerable<TaskItem> source)
+    {
+        target.Clear();
+        foreach (var item in source)
+            target.Add(item);
+    }
+
     // ───────────────────────────────────────────────────────────
-    //  COMMANDS: BRAIN DUMP
+    //  COMMANDS: SURPRISE ME (RANDOMIZER)
     // ───────────────────────────────────────────────────────────
 
     [RelayCommand]
-    private async Task AddToInboxAsync()
+    private async Task SurpriseMeAsync()
     {
-        if (string.IsNullOrWhiteSpace(NewInboxTitle)) return;
+        // Gộp tất cả các task P1 và P2 chưa hoàn thành
+        var candidateTasks = P1Tasks.Concat(P2Tasks).Where(t => t.Status != "DONE").ToList();
+
+        if (candidateTasks.Count == 0)
+        {
+            MessageBox.Show("Bạn đã hoàn thành hết các việc ưu tiên rồi! Quá tuyệt vời!", "Hết việc", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        var dialogVM = new SurpriseTaskDialogViewModel(candidateTasks, _taskService);
+        await MaterialDesignThemes.Wpf.DialogHost.Show(dialogVM, "MainDialogHost");
+        
+        // Cập nhật lại dữ liệu sau khi đóng dialog
+        await LoadDataAsync();
+        WeakReferenceMessenger.Default.Send(new TaskDataChangedMessage());
+    }
+
+    // ───────────────────────────────────────────────────────────
+    //  COMMANDS: ADD TO QUADRANTS
+    // ───────────────────────────────────────────────────────────
+
+    [RelayCommand]
+    private Task AddToP1Async() => AddTaskToQuadrantCoreAsync(NewP1Title, EisenhowerQuadrant.P1_Do, IsP1Recurring, () => { NewP1Title = string.Empty; IsP1Recurring = false; });
+
+    [RelayCommand]
+    private Task AddToP2Async() => AddTaskToQuadrantCoreAsync(NewP2Title, EisenhowerQuadrant.P2_Schedule, IsP2Recurring, () => { NewP2Title = string.Empty; IsP2Recurring = false; });
+
+    [RelayCommand]
+    private Task AddToP3Async() => AddTaskToQuadrantCoreAsync(NewP3Title, EisenhowerQuadrant.P3_Delegate, IsP3Recurring, () => { NewP3Title = string.Empty; IsP3Recurring = false; });
+
+    [RelayCommand]
+    private Task AddToP4Async() => AddTaskToQuadrantCoreAsync(NewP4Title, EisenhowerQuadrant.P4_Eliminate, IsP4Recurring, () => { NewP4Title = string.Empty; IsP4Recurring = false; });
+
+    private async Task AddTaskToQuadrantCoreAsync(string title, EisenhowerQuadrant targetQuadrant, bool isRecurring, Action clearAction)
+    {
+        if (string.IsNullOrWhiteSpace(title)) return;
         var task = new TaskItem
         {
             UserId   = App.CurrentUser?.Id ?? App.DefaultUserId,
-            Title    = NewInboxTitle,
-            Quadrant = EisenhowerQuadrant.Inbox,
-            Status   = "TODO"
+            Title    = title,
+            Quadrant = targetQuadrant,
+            Status   = "TODO",
+            IsRecurring = isRecurring,
+            RecurrenceInterval = isRecurring ? "Weekly" : "None"
         };
         try
         {
-            var added = await _taskService.AddTaskAsync(task);
-            InboxTasks.Add(added);
-            NewInboxTitle = string.Empty;
+            await _taskService.AddTaskAsync(task);
+            clearAction();
             await LoadDataAsync();
+            WeakReferenceMessenger.Default.Send(new TaskDataChangedMessage());
         }
         catch (Exception ex)
         {
             MessageBox.Show($"Không thể thêm công việc:\n{ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    // ───────────────────────────────────────────────────────────
+    //  COMMANDS: AUTO SCHEDULE
+    // ───────────────────────────────────────────────────────────
+
+    [RelayCommand]
+    private async Task AutoScheduleTasksAsync()
+    {
+        try
+        {
+            var allTasks = await _taskService.GetAllTasksAsync(App.CurrentUser?.Id ?? App.DefaultUserId);
+            var activeTasks = allTasks.Where(t => !t.DeletedAt.HasValue && t.Quadrant != EisenhowerQuadrant.Inbox).ToList();
+
+            var dateCounts = activeTasks
+                .Where(t => t.DueDate.HasValue)
+                .GroupBy(t => t.DueDate!.Value.Date)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            var unscheduled = activeTasks
+                .Where(t => t.DueDate == null && t.Status != "DONE")
+                .OrderBy(t => (int)t.Quadrant)
+                .ToList();
+
+            if (unscheduled.Count == 0)
+            {
+                MessageBox.Show("Tuyệt vời! Không có công việc nào cần lên lịch.", "Thông báo", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            DateTime currentDate = DateTime.Today;
+            int maxTasksPerDay = 5;
+            int scheduledCount = 0;
+
+            foreach (var task in unscheduled)
+            {
+                while (dateCounts.GetValueOrDefault(currentDate) >= maxTasksPerDay)
+                {
+                    currentDate = currentDate.AddDays(1);
+                }
+
+                task.DueDate = currentDate;
+                task.UpdatedAt = DateTime.UtcNow;
+                await _taskService.UpdateTaskAsync(task);
+                
+                dateCounts[currentDate] = dateCounts.GetValueOrDefault(currentDate) + 1;
+                scheduledCount++;
+
+                // Tính năng Recurring Tasks 12 tuần
+                if (task.IsRecurring && task.RecurrenceInterval == "Weekly")
+                {
+                    for (int i = 1; i <= 11; i++)
+                    {
+                        var nextDate = currentDate.AddDays(i * 7);
+                        var clone = new TaskItem
+                        {
+                            UserId = task.UserId,
+                            Title = task.Title,
+                            Quadrant = task.Quadrant,
+                            Status = "TODO",
+                            IsRecurring = true,
+                            RecurrenceInterval = "Weekly",
+                            DueDate = nextDate,
+                            IsImportant = task.IsImportant,
+                            IsUrgent = task.IsUrgent,
+                            Priority = task.Priority
+                        };
+                        await _taskService.AddTaskAsync(clone);
+                        
+                        // Cập nhật dateCounts để tránh quá tải cho các ngày tương lai
+                        dateCounts[nextDate] = dateCounts.GetValueOrDefault(nextDate) + 1;
+                        scheduledCount++;
+                    }
+                }
+            }
+
+            await LoadDataAsync();
+            WeakReferenceMessenger.Default.Send(new TaskDataChangedMessage());
+            MessageBox.Show($"Đã tự động lên lịch thành công cho {scheduledCount} công việc!", "Thành công", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Lỗi khi tự động lên lịch:\n{ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -244,6 +397,7 @@ public partial class EisenhowerViewModel : ObservableObject
         {
             await _taskService.UpdateTaskAsync(task);
             await LoadDataAsync();
+            WeakReferenceMessenger.Default.Send(new TaskDataChangedMessage());
         }
         catch (Exception ex)
         {
@@ -265,6 +419,7 @@ public partial class EisenhowerViewModel : ObservableObject
         {
             await _taskService.DeleteTaskAsync(task.Id);
             await LoadDataAsync();
+            WeakReferenceMessenger.Default.Send(new TaskDataChangedMessage());
         }
         catch (Exception ex)
         {
@@ -286,6 +441,7 @@ public partial class EisenhowerViewModel : ObservableObject
         {
             await _taskService.UpdateTaskAsync(task);
             await LoadDataAsync();
+            WeakReferenceMessenger.Default.Send(new TaskDataChangedMessage());
         }
         catch (Exception ex)
         {
@@ -307,6 +463,7 @@ public partial class EisenhowerViewModel : ObservableObject
         {
             await _taskService.UpdateTaskAsync(P2SuggestedTask);
             await LoadDataAsync();
+            WeakReferenceMessenger.Default.Send(new TaskDataChangedMessage());
         }
         catch (Exception ex)
         {

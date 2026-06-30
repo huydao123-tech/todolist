@@ -25,10 +25,8 @@ public class TaskService : ITaskService
     {
         using var context = await _contextFactory.CreateDbContextAsync();
         return await context.Tasks
+            .AsNoTracking()
             .Where(t => t.UserId == userId)
-            .Include(t => t.List)
-            .Include(t => t.TaskTags)
-            .ThenInclude(tt => tt.Tag)
             .ToListAsync();
     }
 
@@ -39,6 +37,7 @@ public class TaskService : ITaskService
     {
         using var context = await _contextFactory.CreateDbContextAsync();
         return await context.Tasks
+            .AsNoTracking()
             .Where(t => t.UserId == userId && t.DueDate >= start && t.DueDate <= end)
             .OrderBy(t => t.DueDate)
             .ToListAsync();

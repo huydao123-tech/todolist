@@ -8,6 +8,7 @@ using TodoList.Models;
 using TodoList.Providers;
 using TodoList.Services;
 using TodoList.ViewModels;
+using CommunityToolkit.Mvvm.Messaging;
 using Xunit;
 
 [assembly: CollectionBehavior(DisableTestParallelization = true)]
@@ -269,6 +270,61 @@ namespace TodoList.Tests
             Assert.NotNull(suggestTask);
             Assert.NotNull(suggestTask.DueDate);
             Assert.Equal(DateTime.Today.AddDays(1).Date, suggestTask.DueDate.Value.Date);
+        }
+
+        [Fact]
+        public async Task TabSwitching_NormalFlow_ShouldUseCacheAndInvalidateOnDataChanged()
+        {
+            // Arrange
+            var factory = CreateInMemoryDbContextFactory();
+            var mockSync = new Mock<IGoogleCalendarSyncService>();
+            var mockTaskService = new Mock<ITaskService>();
+            var userId = Guid.NewGuid();
+            App.CurrentUser = new User { Id = userId, Email = "test@test.com" };
+
+            mockTaskService.Setup(s => s.GetAllTasksAsync(userId))
+                .ReturnsAsync(new System.Collections.Generic.List<TaskItem>
+                {
+                    new TaskItem { UserId = userId, Title = "Task 1", Quadrant = EisenhowerQuadrant.P1_Do, Status = "TODO" }
+                });
+
+            var dashboardVM = new DashboardViewModel(mockTaskService.Object, mockSync.Object, null!);
+            var calendarVM = new CalendarViewModel(mockTaskService.Object);
+            var eisenhowerVM = new EisenhowerViewModel(mockTaskService.Object);
+            var createTaskVM = new CreateTaskViewModel(mockTaskService.Object);
+            
+            var mockServiceProvider = new Mock<IServiceProvider>();
+            var loginVM = new LoginViewModel(factory);
+            var registerVM = new RegisterViewModel(factory);
+            mockServiceProvider.Setup(s => s.GetService(typeof(LoginViewModel))).Returns(loginVM);
+            mockServiceProvider.Setup(s => s.GetService(typeof(RegisterViewModel))).Returns(registerVM);
+
+            var mainVM = new MainViewModel(
+                dashboardVM,
+                calendarVM,
+                createTaskVM,
+                eisenhowerVM,
+                mockServiceProvider.Object,
+                mockSync.Object
+            );
+
+            // Act 1: Initial navigation calls LoadTasksAsync (first load)
+            mainVM.NavigateToTodayCommand.Execute(null);
+            
+            // Act 2: Navigate again - should NOT call LoadTasksAsync because forceReload is false and data is loaded
+            mainVM.NavigateToTodayCommand.Execute(null);
+            
+            // Assert 1: Service should have been queried exactly once
+            mockTaskService.Verify(s => s.GetAllTasksAsync(userId), Times.Once);
+
+            // Act 3: Broadcast TaskDataChangedMessage to simulate mutation
+            CommunityToolkit.Mvvm.Messaging.WeakReferenceMessenger.Default.Send(new TodoList.Messages.TaskDataChangedMessage());
+
+            // Act 4: Navigate to Today again - since cache was invalidated, it should reload!
+            mainVM.NavigateToTodayCommand.Execute(null);
+
+            // Assert 2: Service should have been queried exactly twice (first time + reload after invalidation)
+            mockTaskService.Verify(s => s.GetAllTasksAsync(userId), Times.Exactly(2));
         }
     }
 }

@@ -40,10 +40,12 @@ public partial class App : Application
                 services.AddSingleton<IGoogleCalendarSyncService, GoogleCalendarSyncService>();
                 services.AddTransient<ITaskService, TaskService>();
                 
-                services.AddTransient<DashboardViewModel>();
-                services.AddTransient<CalendarViewModel>();
-                services.AddTransient<CreateTaskViewModel>();
-                services.AddTransient<EisenhowerViewModel>();
+                services.AddSingleton<DashboardViewModel>();
+                services.AddSingleton<CalendarViewModel>();
+                services.AddSingleton<CreateTaskViewModel>();
+                services.AddSingleton<EisenhowerViewModel>();
+                services.AddSingleton<MindSandboxViewModel>();
+                services.AddSingleton<TaDaListViewModel>();
                 services.AddTransient<LoginViewModel>();
                 services.AddTransient<RegisterViewModel>();
                 services.AddTransient<MainViewModel>();

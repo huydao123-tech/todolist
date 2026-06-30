@@ -37,6 +37,9 @@
             <DataTemplate DataType="{x:Type viewmodels:EisenhowerViewModel}">
                 <views:EisenhowerView />
             </DataTemplate>
+            <DataTemplate DataType="{x:Type viewmodels:SurpriseTaskDialogViewModel}">
+                <views:SurpriseTaskDialogView />
+            </DataTemplate>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

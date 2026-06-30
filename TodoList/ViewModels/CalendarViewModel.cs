@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using TodoList.Messages;
@@ -41,16 +42,27 @@ public partial class CalendarViewModel : ObservableObject
         }
     }
 
+    private bool _isDataLoaded;
+    private readonly SemaphoreSlim _loadLock = new(1, 1);
+
+    public void InvalidateCache()
+    {
+        _isDataLoaded = false;
+    }
+
     public CalendarViewModel(ITaskService taskService)
     {
         _taskService = taskService;
-        _ = LoadWeekAsync();
     }
 
-    public async Task LoadWeekAsync()
+    public async Task LoadWeekAsync(bool forceReload = true)
     {
+        if (!forceReload && _isDataLoaded) return;
+        await _loadLock.WaitAsync();
         try
         {
+            if (!forceReload && _isDataLoaded) return;
+
             if (CurrentWeekDate.Date < DateTime.Today)
             {
                 CurrentWeekDate = DateTime.Today;
@@ -60,6 +72,10 @@ public partial class CalendarViewModel : ObservableObject
             var endOfAgenda = startDate.AddDays(13);
 
             var tasks = await _taskService.GetTasksByDateRangeAsync(App.CurrentUser?.Id ?? App.DefaultUserId, startDate, endOfAgenda.AddDays(1).AddTicks(-1));
+            var tasksByDate = tasks
+                .Where(t => t.DueDate.HasValue)
+                .GroupBy(t => t.DueDate!.Value.Date)
+                .ToDictionary(g => g.Key, g => g.OrderBy(t => t.DueDate).ToList());
 
             var topDays = new ObservableCollection<DayGroupViewModel>();
             var agenda = new ObservableCollection<DayGroupViewModel>();
@@ -67,15 +83,12 @@ public partial class CalendarViewModel : ObservableObject
             for (int i = 0; i < 14; i++)
             {
                 var day = startDate.AddDays(i);
-                var dayTasks = tasks
-                    .Where(t => t.DueDate.HasValue && t.DueDate.Value.Date == day.Date)
-                    .OrderBy(t => t.DueDate)
-                    .ToList();
+                tasksByDate.TryGetValue(day.Date, out var dayTasks);
 
                 var dayGroup = new DayGroupViewModel
                 {
                     Date = day,
-                    Tasks = new ObservableCollection<TaskItem>(dayTasks)
+                    Tasks = new ObservableCollection<TaskItem>(dayTasks ?? [])
                 };
 
                 agenda.Add(dayGroup);
@@ -89,11 +102,16 @@ public partial class CalendarViewModel : ObservableObject
 
             TopWeekDays = topDays;
             AgendaDays = agenda;
+            _isDataLoaded = true;
             OnPropertyChanged(nameof(MonthRangeDisplay));
         }
         catch (Exception ex)
         {
             MessageBox.Show($"Lỗi khi tải dữ liệu lịch:\n{ex.Message}", "Lỗi", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            _loadLock.Release();
         }
     }
 

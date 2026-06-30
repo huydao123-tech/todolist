@@ -10,6 +10,72 @@
              d:DesignHeight="800" d:DesignWidth="950">
     <UserControl.Resources>
         <local:StatusToBoolConverter xmlns:local="clr-namespace:TodoList.Converters" x:Key="StatusToBoolConverter" />
+        <local:IntEqualVisibilityConverter xmlns:local="clr-namespace:TodoList.Converters" x:Key="IntEqualVisibilityConverter" />
+        
+        <!-- Extracted ItemContainerStyle -->
+        <Style x:Key="TaskListItemStyle" TargetType="ListBoxItem">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0,0,0,15"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        </Style>
+
+        <!-- Extracted ItemTemplate -->
+        <DataTemplate x:Key="TaskItemTemplate">
+            <Border Background="White" CornerRadius="12" Padding="20" BorderBrush="#E2E8F0" BorderThickness="1">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <CheckBox Grid.Column="0" Margin="0,0,20,0" VerticalAlignment="Center"
+                              Style="{StaticResource MaterialDesignCheckBox}"
+                              IsChecked="{Binding Status, Converter={StaticResource StatusToBoolConverter}}">
+                        <CheckBox.LayoutTransform>
+                            <ScaleTransform ScaleX="1.5" ScaleY="1.5"/>
+                        </CheckBox.LayoutTransform>
+                    </CheckBox>
+                    <Grid Grid.Column="1" VerticalAlignment="Center">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="{Binding Title}" FontSize="16" FontWeight="SemiBold" Foreground="#1F2024" Margin="0,0,0,5"/>
+                            <StackPanel Orientation="Horizontal">
+                                <Border Background="{Binding Priority, Converter={StaticResource PriorityToBg}, FallbackValue=#E0DDF7}" 
+                                        CornerRadius="10" Padding="8,2" Margin="0,0,15,0">
+                                    <TextBlock Text="{Binding Priority, FallbackValue=General}" FontSize="11" FontWeight="Bold" 
+                                               Foreground="{Binding Priority, Converter={StaticResource PriorityToFg}, FallbackValue=#5E40DF}"/>
+                                </Border>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <materialDesign:PackIcon Kind="ClockOutline" Width="12" Height="12" Foreground="#8B8D98" Margin="0,0,4,0"/>
+                                    <TextBlock Text="{Binding TimeRangeDisplay}" FontSize="12" Foreground="#8B8D98"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+                        
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Style="{StaticResource MaterialDesignIconForegroundButton}" 
+                                    Foreground="#8B8D98" Width="30" Height="30" Padding="0" Margin="0,0,5,0"
+                                    ToolTip="View Details"
+                                    Command="{Binding DataContext.ShowTaskDetailsCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                    CommandParameter="{Binding}">
+                                <materialDesign:PackIcon Kind="EyeOutline" Width="20" Height="20" />
+                            </Button>
+                            <Button Style="{StaticResource MaterialDesignIconForegroundButton}" 
+                                    Foreground="#EF4444" Width="30" Height="30" Padding="0"
+                                    ToolTip="Delete Task"
+                                    Command="{Binding DataContext.DeleteTaskCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                                    CommandParameter="{Binding}">
+                                <materialDesign:PackIcon Kind="TrashCanOutline" Width="20" Height="20" />
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </Border>
+        </DataTemplate>
     </UserControl.Resources>
     
     <Grid Margin="40">
@@ -72,74 +138,20 @@
                 <ColumnDefinition Width="1*" />
             </Grid.ColumnDefinitions>
 
-            <!-- Task List -->
-            <ListBox Grid.Column="0" ItemsSource="{Binding DisplayedTasks}" Background="Transparent" BorderThickness="0" Margin="0,0,30,0"
-                     HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                <ListBox.ItemContainerStyle>
-                    <Style TargetType="ListBoxItem">
-                        <Setter Property="Padding" Value="0"/>
-                        <Setter Property="Margin" Value="0,0,0,15"/>
-                        <Setter Property="Background" Value="Transparent"/>
-                        <Setter Property="BorderThickness" Value="0"/>
-                        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-                    </Style>
-                </ListBox.ItemContainerStyle>
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <Border Background="White" CornerRadius="12" Padding="20" BorderBrush="#E2E8F0" BorderThickness="1">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <CheckBox Grid.Column="0" Margin="0,0,20,0" VerticalAlignment="Center"
-                                          Style="{StaticResource MaterialDesignCheckBox}"
-                                          IsChecked="{Binding Status, Converter={StaticResource StatusToBoolConverter}}">
-                                    <CheckBox.LayoutTransform>
-                                        <ScaleTransform ScaleX="1.5" ScaleY="1.5"/>
-                                    </CheckBox.LayoutTransform>
-                                </CheckBox>
-                                <Grid Grid.Column="1" VerticalAlignment="Center">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="{Binding Title}" FontSize="16" FontWeight="SemiBold" Foreground="#1F2024" Margin="0,0,0,5"/>
-                                        <StackPanel Orientation="Horizontal">
-                                            <Border Background="{Binding Priority, Converter={StaticResource PriorityToBg}, FallbackValue=#E0DDF7}" 
-                                                    CornerRadius="10" Padding="8,2" Margin="0,0,15,0">
-                                                <TextBlock Text="{Binding Priority, FallbackValue=General}" FontSize="11" FontWeight="Bold" 
-                                                           Foreground="{Binding Priority, Converter={StaticResource PriorityToFg}, FallbackValue=#5E40DF}"/>
-                                            </Border>
-                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                <materialDesign:PackIcon Kind="ClockOutline" Width="12" Height="12" Foreground="#8B8D98" Margin="0,0,4,0"/>
-                                                <TextBlock Text="{Binding TimeRangeDisplay}" FontSize="12" Foreground="#8B8D98"/>
-                                            </StackPanel>
-                                        </StackPanel>
-                                    </StackPanel>
-                                    
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                        <Button Style="{StaticResource MaterialDesignIconForegroundButton}" 
-                                                Foreground="#8B8D98" Width="30" Height="30" Padding="0" Margin="0,0,5,0"
-                                                ToolTip="View Details"
-                                                Command="{Binding DataContext.ShowTaskDetailsCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
-                                                CommandParameter="{Binding}">
-                                            <materialDesign:PackIcon Kind="EyeOutline" Width="20" Height="20" />
-                                        </Button>
-                                        <Button Style="{StaticResource MaterialDesignIconForegroundButton}" 
-                                                Foreground="#EF4444" Width="30" Height="30" Padding="0"
-                                                ToolTip="Delete Task"
-                                                Command="{Binding DataContext.DeleteTaskCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
-                                                CommandParameter="{Binding}">
-                                            <materialDesign:PackIcon Kind="TrashCanOutline" Width="20" Height="20" />
-                                        </Button>
-                                    </StackPanel>
-                                </Grid>
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
+            <!-- Task List (Today) -->
+            <ListBox Grid.Column="0" ItemsSource="{Binding TodayTasksList}" Background="Transparent" BorderThickness="0" Margin="0,0,30,0"
+                     HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     ItemContainerStyle="{StaticResource TaskListItemStyle}"
+                     ItemTemplate="{StaticResource TaskItemTemplate}"
+                     Visibility="{Binding SelectedTabIndex, Converter={StaticResource IntEqualVisibilityConverter}, ConverterParameter=0}">
+            </ListBox>
+
+            <!-- Task List (All Tasks) -->
+            <ListBox Grid.Column="0" ItemsSource="{Binding AllTasksList}" Background="Transparent" BorderThickness="0" Margin="0,0,30,0"
+                     HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     ItemContainerStyle="{StaticResource TaskListItemStyle}"
+                     ItemTemplate="{StaticResource TaskItemTemplate}"
+                     Visibility="{Binding SelectedTabIndex, Converter={StaticResource IntEqualVisibilityConverter}, ConverterParameter=1}">
             </ListBox>
 
             <!-- Right Column Widgets -->

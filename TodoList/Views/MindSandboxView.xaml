@@ -1,0 +1,130 @@
+<UserControl x:Class="TodoList.Views.MindSandboxView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:viewmodels="clr-namespace:TodoList.ViewModels"
+             mc:Ignorable="d" 
+             d:DesignHeight="800" d:DesignWidth="950"
+             d:DataContext="{d:DesignInstance viewmodels:MindSandboxViewModel}"
+             Background="#1E1E2E">
+    <UserControl.Resources>
+        <!-- Converter để tạo màu ngẫu nhiên nhưng cố định theo ID -->
+        <Style x:Key="PostItCardStyle" TargetType="Border">
+            <Setter Property="Background" Value="#FDE68A" />
+            <Setter Property="CornerRadius" Value="2" />
+            <Setter Property="Padding" Value="15" />
+            <Setter Property="Margin" Value="10" />
+            <Setter Property="Width" Value="250" />
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect BlurRadius="10" ShadowDepth="3" Opacity="0.3" Color="Black" />
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <!-- Randomize background somewhat for fun -->
+                <DataTrigger Binding="{Binding IsImportant}" Value="True">
+                    <Setter Property="Background" Value="#FECACA" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="40,40,40,20">
+            <TextBlock Text="Hố Đen Ý Tưởng 🛸" FontSize="32" FontWeight="Bold" Foreground="#F8FAFC" />
+            <TextBlock Text="Nơi neo đậu của những suy nghĩ miên man. Không quy tắc, không ngày tháng." 
+                       FontSize="16" Foreground="#94A3B8" Margin="0,5,0,0" />
+        </StackPanel>
+
+        <!-- Input Area -->
+        <Border Grid.Row="1" Margin="40,0,40,30" Background="#2A2A3C" CornerRadius="12" Padding="20">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                
+                <TextBox Grid.Column="0" 
+                         Text="{Binding NewIdeaText, UpdateSourceTrigger=PropertyChanged}"
+                         materialDesign:HintAssist.Hint="Ý tưởng điên rồ gì đang nảy ra vậy? (Shift+Enter để xuống dòng)"
+                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                         Foreground="White"
+                         materialDesign:HintAssist.Foreground="#94A3B8"
+                         materialDesign:TextFieldAssist.UnderlineBrush="Transparent"
+                         BorderThickness="0"
+                         FontSize="18"
+                         TextWrapping="Wrap"
+                         AcceptsReturn="True"
+                         MinHeight="60"
+                         MaxHeight="150"
+                         VerticalScrollBarVisibility="Auto">
+                    <TextBox.InputBindings>
+                        <KeyBinding Key="Return" Command="{Binding CaptureIdeaCommand}" />
+                    </TextBox.InputBindings>
+                </TextBox>
+                
+                <Button Grid.Column="1" Margin="20,0,0,0"
+                        Command="{Binding CaptureIdeaCommand}"
+                        Style="{StaticResource MaterialDesignFloatingActionAccentButton}"
+                        Background="#5E40DF" BorderBrush="#5E40DF"
+                        Width="50" Height="50" VerticalAlignment="Bottom">
+                    <materialDesign:PackIcon Kind="Send" Width="24" Height="24" />
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Ideas Board (Masonry / WrapPanel) -->
+        <ScrollViewer Grid.Row="2" Margin="30,0,30,20" VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Ideas}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource PostItCardStyle}">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                
+                                <TextBlock Grid.Row="0" Text="{Binding Title}" 
+                                           FontSize="16" Foreground="#1F2024" 
+                                           TextWrapping="Wrap" Margin="0,0,0,20" />
+                                
+                                <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <!-- Convert to Task Button -->
+                                    <Button Style="{StaticResource MaterialDesignIconButton}"
+                                            Command="{Binding DataContext.PromoteToTaskCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                            CommandParameter="{Binding}"
+                                            ToolTip="Biến thành công việc" Width="30" Height="30" Foreground="#10B981">
+                                        <materialDesign:PackIcon Kind="BriefcaseArrowRight" Width="20" Height="20" />
+                                    </Button>
+                                    
+                                    <!-- Delete Button -->
+                                    <Button Style="{StaticResource MaterialDesignIconButton}"
+                                            Command="{Binding DataContext.DeleteIdeaCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                            CommandParameter="{Binding}"
+                                            ToolTip="Xóa ý tưởng" Width="30" Height="30" Foreground="#EF4444">
+                                        <materialDesign:PackIcon Kind="TrashCanOutline" Width="20" Height="20" />
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

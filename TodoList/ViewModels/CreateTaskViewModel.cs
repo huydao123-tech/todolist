@@ -214,6 +214,7 @@ public partial class CreateTaskViewModel : ObservableObject
             {
                 await _taskService.UpdateTaskAsync(EditingTask);
                 LoadTask(null); // Reset form
+                WeakReferenceMessenger.Default.Send(new TaskDataChangedMessage());
                 WeakReferenceMessenger.Default.Send(new NavigationMessage("Dashboard"));
             }
             catch (Exception ex)
@@ -240,6 +241,7 @@ public partial class CreateTaskViewModel : ObservableObject
             {
                 await _taskService.AddTaskAsync(newTask);
                 LoadTask(null); // Reset form
+                WeakReferenceMessenger.Default.Send(new TaskDataChangedMessage());
                 WeakReferenceMessenger.Default.Send(new NavigationMessage("Dashboard"));
             }
             catch (Exception ex)

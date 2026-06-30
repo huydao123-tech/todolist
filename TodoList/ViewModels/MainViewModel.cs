@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using TodoList.Messages;
 using TodoList.Services;
@@ -10,14 +11,24 @@ namespace TodoList.ViewModels;
 
 public partial class MainViewModel : ObservableObject, 
     IRecipient<NavigationMessage>, 
-    IRecipient<UserStatusChangedMessage>
+    IRecipient<UserStatusChangedMessage>,
+    IRecipient<TaskDataChangedMessage>
 {
     private readonly DashboardViewModel _dashboardViewModel;
     private readonly CalendarViewModel _calendarViewModel;
     private readonly CreateTaskViewModel _createTaskViewModel;
     private readonly EisenhowerViewModel _eisenhowerViewModel;
+    private readonly MindSandboxViewModel _mindSandboxViewModel;
+    private readonly TaDaListViewModel _taDaListViewModel;
     private readonly IServiceProvider _serviceProvider;
     private readonly IGoogleCalendarSyncService _syncService;
+
+    public DashboardViewModel DashboardViewModel => _dashboardViewModel;
+    public CalendarViewModel CalendarViewModel => _calendarViewModel;
+    public CreateTaskViewModel CreateTaskViewModel => _createTaskViewModel;
+    public EisenhowerViewModel EisenhowerViewModel => _eisenhowerViewModel;
+    public MindSandboxViewModel MindSandboxViewModel => _mindSandboxViewModel;
+    public TaDaListViewModel TaDaListViewModel => _taDaListViewModel;
 
     [ObservableProperty]
     private ObservableObject _currentViewModel = null!;
@@ -42,6 +53,8 @@ public partial class MainViewModel : ObservableObject,
         CalendarViewModel calendarViewModel, 
         CreateTaskViewModel createTaskViewModel,
         EisenhowerViewModel eisenhowerViewModel,
+        MindSandboxViewModel mindSandboxViewModel,
+        TaDaListViewModel taDaListViewModel,
         IServiceProvider serviceProvider,
         IGoogleCalendarSyncService syncService)
     {
@@ -49,11 +62,14 @@ public partial class MainViewModel : ObservableObject,
         _calendarViewModel = calendarViewModel;
         _createTaskViewModel = createTaskViewModel;
         _eisenhowerViewModel = eisenhowerViewModel;
+        _mindSandboxViewModel = mindSandboxViewModel;
+        _taDaListViewModel = taDaListViewModel;
         _serviceProvider = serviceProvider;
         _syncService = syncService;
         
         WeakReferenceMessenger.Default.Register<NavigationMessage>(this);
         WeakReferenceMessenger.Default.Register<UserStatusChangedMessage>(this);
+        WeakReferenceMessenger.Default.Register<TaskDataChangedMessage>(this);
 
         ShowLogin();
     }
@@ -83,6 +99,10 @@ public partial class MainViewModel : ObservableObject,
         {
             NavigateToEisenhower();
         }
+        else if (message.Value == "MindSandbox")
+        {
+            NavigateToMindSandbox();
+        }
     }
 
     public void Receive(UserStatusChangedMessage message)
@@ -105,10 +125,48 @@ public partial class MainViewModel : ObservableObject,
         }
     }
 
+    public void Receive(TaskDataChangedMessage message)
+    {
+        var source = message.Source;
+        var dashboardChanged = ReferenceEquals(source, _dashboardViewModel);
+        var calendarChanged = ReferenceEquals(source, _calendarViewModel);
+        var eisenhowerChanged = ReferenceEquals(source, _eisenhowerViewModel);
+
+        if (!dashboardChanged)
+            _dashboardViewModel.InvalidateCache();
+        if (!calendarChanged)
+            _calendarViewModel.InvalidateCache();
+        if (!eisenhowerChanged)
+            _eisenhowerViewModel.InvalidateCache();
+
+        if (CurrentViewModel == _dashboardViewModel && !dashboardChanged)
+        {
+            _ = _dashboardViewModel.LoadTasksAsync(forceReload: true);
+        }
+        else if (CurrentViewModel == _calendarViewModel && !calendarChanged)
+        {
+            _ = _calendarViewModel.LoadWeekAsync(forceReload: true);
+        }
+        else if (CurrentViewModel == _eisenhowerViewModel && !eisenhowerChanged)
+        {
+            _ = _eisenhowerViewModel.LoadDataAsync(forceReload: true);
+        }
+    }
+
     private async Task AutoSyncAfterLoginAsync()
     {
         try
         {
+            var taskService = (ITaskService)_serviceProvider.GetService(typeof(ITaskService))!;
+            var allTasks = await taskService.GetAllTasksAsync(App.CurrentUser?.Id ?? App.DefaultUserId);
+            bool hasSyncedBefore = allTasks.Any(t => !string.IsNullOrEmpty(t.GoogleEventId));
+            
+            if (hasSyncedBefore)
+            {
+                // Chỉ sync lần đầu tiên, nếu đã có dữ liệu Google Calendar thì bỏ qua
+                return;
+            }
+
             IsSyncing = true;
             await Task.Run(() => _syncService.PullTasksAsync(_serviceProvider));
             // Sau khi sync xong, reload lại dữ liệu trang hiện tại
@@ -141,16 +199,18 @@ public partial class MainViewModel : ObservableObject,
     private void NavigateToDashboard()
     {
         ActivePage = "Dashboard";
-        _ = _dashboardViewModel.LoadTasksAsync();
         CurrentViewModel = _dashboardViewModel;
+        _dashboardViewModel.SelectedTabIndex = 1;
+        _ = _dashboardViewModel.LoadTasksAsync(forceReload: false);
     }
 
     [RelayCommand]
     private void NavigateToToday()
     {
         ActivePage = "Today";
-        _ = _dashboardViewModel.LoadTasksAsync();
         CurrentViewModel = _dashboardViewModel;
+        _dashboardViewModel.SelectedTabIndex = 0;
+        _ = _dashboardViewModel.LoadTasksAsync(forceReload: false);
     }
 
     /// <summary>
@@ -160,8 +220,8 @@ public partial class MainViewModel : ObservableObject,
     private void NavigateToCalendar()
     {
         ActivePage = "Calendar";
-        _ = _calendarViewModel.LoadWeekAsync();
         CurrentViewModel = _calendarViewModel;
+        _ = _calendarViewModel.LoadWeekAsync(forceReload: false);
     }
 
     /// <summary>
@@ -171,8 +231,30 @@ public partial class MainViewModel : ObservableObject,
     private void NavigateToEisenhower()
     {
         ActivePage = "Eisenhower";
-        _ = _eisenhowerViewModel.LoadDataAsync();
         CurrentViewModel = _eisenhowerViewModel;
+        _ = _eisenhowerViewModel.LoadDataAsync(forceReload: false);
+    }
+
+    /// <summary>
+    /// Chuyển hướng sang màn hình Mind Sandbox.
+    /// </summary>
+    [RelayCommand]
+    private void NavigateToMindSandbox()
+    {
+        ActivePage = "MindSandbox";
+        CurrentViewModel = _mindSandboxViewModel;
+        _ = _mindSandboxViewModel.LoadIdeasAsync();
+    }
+
+    /// <summary>
+    /// Chuyển hướng sang màn hình Ta-Da List.
+    /// </summary>
+    [RelayCommand]
+    private void NavigateToTaDaList()
+    {
+        ActivePage = "TaDaList";
+        CurrentViewModel = _taDaListViewModel;
+        _ = _taDaListViewModel.LoadDataAsync();
     }
 
     /// <summary>

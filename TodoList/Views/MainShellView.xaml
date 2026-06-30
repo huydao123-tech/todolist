@@ -15,6 +15,7 @@
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
+        <converters:ViewModelToVisibilityConverter x:Key="ViewModelToVisibilityConverter" />
         
         <!-- DataTemplates to swap Login & Register views inside ContentControl -->
         <DataTemplate DataType="{x:Type viewmodels:LoginViewModel}">
@@ -117,6 +118,46 @@
                                     <TextBlock Text="Eisenhower" FontWeight="SemiBold"/>
                                 </StackPanel>
                             </Button>
+
+                            <!-- Mind Sandbox (Idea Dump) -->
+                            <Button HorizontalContentAlignment="Left" Margin="0,2" Command="{Binding NavigateToMindSandboxCommand}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignFlatButton}">
+                                        <Setter Property="Foreground" Value="#1F2024"/>
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ActivePage}" Value="MindSandbox">
+                                                <Setter Property="Background" Value="#E0DDF7"/>
+                                                <Setter Property="Foreground" Value="#5E40DF"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="LightbulbOn" Width="20" Height="20" Margin="0,0,15,0"/>
+                                    <TextBlock Text="Mind Sandbox" FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Ta-Da List -->
+                            <Button HorizontalContentAlignment="Left" Margin="0,2" Command="{Binding NavigateToTaDaListCommand}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource MaterialDesignFlatButton}">
+                                        <Setter Property="Foreground" Value="#1F2024"/>
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ActivePage}" Value="TaDaList">
+                                                <Setter Property="Background" Value="#FDE68A"/>
+                                                <Setter Property="Foreground" Value="#B45309"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="StarShootingOutline" Width="20" Height="20" Margin="0,0,15,0"/>
+                                    <TextBlock Text="Ta-Da List" FontWeight="SemiBold"/>
+                                </StackPanel>
+                            </Button>
                         </StackPanel>
 
                         <!-- Categories -->
@@ -192,8 +233,21 @@
                     </Grid>
                 </Border>
 
-                <!-- Main Content (Dynamic via MVVM Navigation) -->
-                <ContentControl Grid.Column="1" Content="{Binding CurrentViewModel}" />
+                <!-- Main Content (Cached via Visibility to prevent Lag/Memory leaks) -->
+                <Grid Grid.Column="1">
+                    <views:DashboardView DataContext="{Binding DashboardViewModel}" 
+                                         Visibility="{Binding DataContext.CurrentViewModel, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ViewModelToVisibilityConverter}, ConverterParameter=DashboardViewModel}" />
+                    <views:CalendarView DataContext="{Binding CalendarViewModel}" 
+                                        Visibility="{Binding DataContext.CurrentViewModel, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ViewModelToVisibilityConverter}, ConverterParameter=CalendarViewModel}" />
+                    <views:CreateTaskView DataContext="{Binding CreateTaskViewModel}" 
+                                          Visibility="{Binding DataContext.CurrentViewModel, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ViewModelToVisibilityConverter}, ConverterParameter=CreateTaskViewModel}" />
+                    <views:EisenhowerView DataContext="{Binding EisenhowerViewModel}" 
+                                          Visibility="{Binding DataContext.CurrentViewModel, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ViewModelToVisibilityConverter}, ConverterParameter=EisenhowerViewModel}" />
+                    <views:MindSandboxView DataContext="{Binding MindSandboxViewModel}" 
+                                           Visibility="{Binding DataContext.CurrentViewModel, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ViewModelToVisibilityConverter}, ConverterParameter=MindSandboxViewModel}" />
+                    <views:TaDaListView DataContext="{Binding TaDaListViewModel}" 
+                                        Visibility="{Binding DataContext.CurrentViewModel, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ViewModelToVisibilityConverter}, ConverterParameter=TaDaListViewModel}" />
+                </Grid>
             </Grid>
         </Grid>
     </materialDesign:DialogHost>
