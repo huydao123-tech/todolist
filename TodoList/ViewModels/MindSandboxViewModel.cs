@@ -29,18 +29,25 @@ public partial class MindSandboxViewModel : ObservableObject, IRecipient<TaskDat
 
     public async Task LoadIdeasAsync()
     {
-        var allTasks = await _taskService.GetAllTasksAsync(App.CurrentUser?.Id ?? App.DefaultUserId);
-        
-        // Chỉ lấy những công việc nằm trong Inbox và chưa bị xóa
-        var inboxTasks = allTasks
-            .Where(t => t.Quadrant == EisenhowerQuadrant.Inbox && !t.DeletedAt.HasValue)
-            .OrderByDescending(t => t.UpdatedAt)
-            .ToList();
-
-        Ideas.Clear();
-        foreach (var task in inboxTasks)
+        try
         {
-            Ideas.Add(task);
+            var allTasks = await _taskService.GetAllTasksAsync(App.CurrentUser?.Id ?? App.DefaultUserId);
+            
+            // Chỉ lấy những công việc nằm trong Inbox và chưa bị xóa
+            var inboxTasks = allTasks
+                .Where(t => t.Quadrant == EisenhowerQuadrant.Inbox && !t.DeletedAt.HasValue)
+                .OrderByDescending(t => t.UpdatedAt)
+                .ToList();
+
+            Ideas.Clear();
+            foreach (var task in inboxTasks)
+            {
+                Ideas.Add(task);
+            }
+        }
+        catch (Exception)
+        {
+            // Bỏ qua lỗi transient DB
         }
     }
 

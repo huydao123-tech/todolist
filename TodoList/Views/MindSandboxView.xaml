@@ -17,11 +17,8 @@
             <Setter Property="Padding" Value="15" />
             <Setter Property="Margin" Value="10" />
             <Setter Property="Width" Value="250" />
-            <Setter Property="Effect">
-                <Setter.Value>
-                    <DropShadowEffect BlurRadius="10" ShadowDepth="3" Opacity="0.3" Color="Black" />
-                </Setter.Value>
-            </Setter>
+            <Setter Property="BorderBrush" Value="#EAB308" />
+            <Setter Property="BorderThickness" Value="1" />
             <Style.Triggers>
                 <!-- Randomize background somewhat for fun -->
                 <DataTrigger Binding="{Binding IsImportant}" Value="True">

@@ -31,23 +31,30 @@ public partial class TaDaListViewModel : ObservableObject, IRecipient<TaskDataCh
 
     public async Task LoadDataAsync()
     {
-        var allTasks = await _taskService.GetAllTasksAsync(App.CurrentUser?.Id ?? App.DefaultUserId);
-        
-        // Lọc ra các công việc ĐÃ XONG và có ngày UpdateAt là HÔM NAY
-        var today = DateTime.UtcNow.Date;
-        var tadaTasks = allTasks
-            .Where(t => t.Status == "DONE" && t.UpdatedAt.Date == today)
-            .OrderByDescending(t => t.UpdatedAt)
-            .ToList();
-
-        CompletedTasks.Clear();
-        foreach (var task in tadaTasks)
+        try
         {
-            CompletedTasks.Add(task);
-        }
+            var allTasks = await _taskService.GetAllTasksAsync(App.CurrentUser?.Id ?? App.DefaultUserId);
+            
+            // Lọc ra các công việc ĐÃ XONG và có ngày UpdateAt là HÔM NAY
+            var today = DateTime.UtcNow.Date;
+            var tadaTasks = allTasks
+                .Where(t => t.Status == "DONE" && t.UpdatedAt.Date == today)
+                .OrderByDescending(t => t.UpdatedAt)
+                .ToList();
 
-        CompletedCount = CompletedTasks.Count;
-        UpdateEncouragingMessage();
+            CompletedTasks.Clear();
+            foreach (var task in tadaTasks)
+            {
+                CompletedTasks.Add(task);
+            }
+
+            CompletedCount = CompletedTasks.Count;
+            UpdateEncouragingMessage();
+        }
+        catch (Exception)
+        {
+            // Bỏ qua lỗi transient DB
+        }
     }
 
     private void UpdateEncouragingMessage()

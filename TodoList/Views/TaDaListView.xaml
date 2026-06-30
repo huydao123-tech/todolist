@@ -54,10 +54,7 @@
                 <!-- Item Template giống tấm huân chương -->
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Width="300" Height="100" Margin="15" Background="White" CornerRadius="16" Padding="15">
-                            <Border.Effect>
-                                <DropShadowEffect BlurRadius="15" ShadowDepth="4" Color="#FDE68A" Opacity="0.8"/>
-                            </Border.Effect>
+                        <Border Width="300" Height="100" Margin="15" Background="White" CornerRadius="16" Padding="15" BorderBrush="#FDE68A" BorderThickness="2">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
