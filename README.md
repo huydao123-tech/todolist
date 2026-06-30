@@ -1,121 +1,56 @@
-# 📝 TodoList App with Google Calendar Sync & Eisenhower Matrix
+# ADHD-Friendly Todo List App 🚀
 
-Ứng dụng quản lý công việc cá nhân (TodoList) được xây dựng trên nền tảng **WPF (Windows Presentation Foundation)** theo mô hình kiến trúc **MVVM** chuẩn, tích hợp hệ thống lưu trữ **SQL Server**, đồng bộ hai chiều thời gian thực với **Google Calendar** và hỗ trợ sắp xếp công việc thông minh theo **Ma trận quyết định Eisenhower**.
+Một ứng dụng quản lý công việc và thời gian được thiết kế đặc biệt dựa trên tâm lý học hành vi, dành riêng cho những bộ não tư duy phân nhánh (Ne) như INTP hoặc những người có hội chứng ADHD nhẹ. 
 
----
+Thay vì ép buộc người dùng vào các khuôn khổ cứng nhắc truyền thống, ứng dụng này mang đến sự linh hoạt tối đa, tập trung vào việc giảm tải nhận thức (cognitive load) và cung cấp phần thưởng tức thời (dopamine hits).
 
-## 🚀 Tính Năng Nổi Bật
+## 🌟 Các Tính Năng Nổi Bật
 
-### 1. 🔐 Đăng Nhập & Bảo Mật Đa Người Dùng
-- Cho phép nhiều người dùng đăng ký và đăng nhập tài khoản riêng biệt.
-- Cơ chế mã hóa một chiều mật khẩu bằng thuật toán **PBKDF2** kết hợp Muối ngẫu nhiên (Salt) và 10,000 vòng lặp vô cùng bảo mật.
-- Cô lập hoàn toàn dữ liệu công việc và phiên làm việc giữa các tài khoản khác nhau.
+### 1. Ma Trận Eisenhower (Có tích hợp AI & Tự Động Hóa)
+- Phân loại công việc theo 4 mức độ: Quan trọng & Khẩn cấp (P1), Quan trọng nhưng Không Khẩn cấp (P2), Khẩn cấp nhưng Không Quan trọng (P3), Không Quan trọng & Không Khẩn cấp (P4).
+- **Khuyên bảo từ AI**: Tích hợp các lời khuyên dựa trên dữ liệu thật của bạn (ví dụ: Cảnh báo nếu P3 quá nhiều, hoặc biểu dương nếu bạn đang làm tốt ở P2).
+- **Lặp lại 12 tuần (Auto-Schedule)**: Gạt đi nỗi lo phải tạo lại công việc lặp đi lặp lại. Tính năng tự động xếp lịch sẽ sinh ra chuỗi task cho 12 tuần tới.
 
-### 2. 🔄 Đồng Bộ Hóa 2 Chiều Google Calendar (Tối Ưu Hiệu Năng)
-- Tự động đồng bộ các công việc giữa ứng dụng và Lịch cá nhân của Google sau khi đăng nhập thành công.
-- Hỗ trợ thêm/sửa/xóa sự kiện thời gian thực (nền).
-- **Thuật toán tối ưu hóa:** Sử dụng cơ chế nạp bộ nhớ đệm `Dictionary` trên RAM để triệt tiêu lỗi nghẽn truy vấn mạng $N+1$ (N+1 Query Issue), giúp tốc độ đồng bộ nhanh gấp nhiều lần.
+### 2. Hố Đen Ý Tưởng (Mind Sandbox) 🛸
+- Một không gian hoàn toàn "Distraction-free". Không yêu cầu ngày tháng, không cần ưu tiên, không quy tắc.
+- Bạn có thể xả ngay bất kỳ ý tưởng điên rồ nào lóe lên trong đầu.
+- Giao diện dạng bảng dán giấy nhớ (Post-it notes) xếp lộn xộn một cách có tổ chức. Từ đây, bạn có thể biến chúng thành công việc nghiêm túc, hoặc ném vào sọt rác.
 
-### 3. 🧩 Ma Trận Quyết Định Eisenhower
-- Phân loại trực quan công việc thành 4 ô kinh điển: **P1 (Do)**, **P2 (Schedule)**, **P3 (Delegate)**, **P4 (Eliminate)**.
-- **Hộp thư đến (Brain Dump / Inbox):** Ghi nhanh công việc chưa phân loại vào hộp thư và ném nhanh vào các vùng tương ứng sau.
-- **Giới hạn tải P1 (WIP Limit = 5):** Cảnh báo quá tải và gợi ý chuyển sang P2 khi ô khẩn cấp P1 vượt quá 5 việc nhằm hạn chế stress.
-- **Gợi ý lịch trình P2 (Schedule Suggestions):** Quét phát hiện và tự động gợi ý đặt lịch ngày mai cho các task P2 quan trọng đang bị thiếu hạn chót.
+### 3. Nút Xúc Xắc (Surprise Me / Randomizer) 🎲
+- **Vũ khí chống Tê liệt quyết định (ADHD Paralysis)**.
+- Khi bạn nhìn vào danh sách việc quá dài và không biết bắt đầu từ đâu, hãy nhấn nút Xúc Xắc.
+- Ứng dụng sẽ đưa bạn vào **Chế độ Tập Trung (Focus Mode)**: Che khuất toàn bộ mọi thứ xung quanh và chỉ chỉ định đúng 1 việc ưu tiên ngẫu nhiên cho bạn làm. "Hoặc làm việc này, hoặc bốc việc khác".
 
-### 4. 📊 Phân Tích Hiệu Suất (Analytics)
-- Biểu đồ đo tỷ lệ phân bổ phần trăm công việc hoàn thành trong tuần theo từng vùng ma trận bằng WPF `ProgressBar`.
-- Đưa ra lời khuyên cá nhân hóa từ hệ thống chuyên gia (Decision Tree) giúp bạn cân đối thời gian và công việc hiệu quả hơn.
+### 4. Bảng Thành Tựu (Ta-Da List) 🏆
+- Đánh bại chứng "mù thời gian" và suy nghĩ tiêu cực "hôm nay chưa làm được gì".
+- Chỉ hiển thị những việc **ĐÃ LÀM XONG** trong ngày hôm nay.
+- Biến các công việc thành huân chương lấp lánh kèm theo các lời động viên được tự động sinh ra tùy theo mức độ năng suất của bạn.
 
-### 5. 📅 Xem Lịch Trình (Agenda & Calendar)
-- Giao diện xem lịch trình trực quan theo tuần và tháng giúp người dùng dễ dàng bao quát tiến độ.
+### 5. Lịch & Đồng bộ hóa Google Calendar 📅
+- Hiển thị trực quan dưới dạng lịch tháng.
+- Nút đồng bộ hóa (Sync) cho phép kéo các sự kiện từ Google Calendar về ứng dụng mà không cần phải mở web. Dữ liệu chỉ đồng bộ 1 lần hoặc khi bạn chủ động ấn nút, không gây gián đoạn hay quá tải trải nghiệm.
 
----
+### 6. Quản Lý Tài Khoản 🔒
+- Hệ thống Đăng nhập (Login) và Đăng ký (Register) an toàn bằng mật khẩu đã được mã hóa (Bcrypt).
+- Dữ liệu của ai người đó dùng, bảo mật và riêng tư.
 
 ## 🛠️ Công Nghệ Sử Dụng
+- **Ngôn ngữ**: C# / .NET 8.0
+- **Giao diện**: WPF (Windows Presentation Foundation) kết hợp Material Design In XAML Toolkit.
+- **Kiến trúc**: MVVM (Model-View-ViewModel) với CommunityToolkit.Mvvm.
+- **Cơ sở dữ liệu**: SQLite (qua Entity Framework Core).
+- **Tích hợp**: Google Calendar API.
 
-- **Framework:** .NET 8.0-windows (WPF)
-- **MVVM Helper:** CommunityToolkit.Mvvm (Source Generators cho Properties/Commands)
-- **UI & Themes:** Material Design In XAML Toolkit v5.3.2
-- **ORM / Database:** Entity Framework Core 8.0 + Microsoft SQL Server Express
-- **API Integration:** Google.Apis.Calendar.v3 v1.75.0
-- **Unit Testing:** xUnit + Moq + EF Core InMemory Database
-
----
-
-## 💻 Hướng Dẫn Cài Đặt & Chạy Thử
-
-### Yêu Cầu Hệ Thống:
-- [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) hoặc mới hơn.
-- SQL Server Express cục bộ đang hoạt động.
-- Một tài khoản Google dùng để đồng bộ.
-
-### Các Bước Thực Hiện:
-
-1. **Tải mã nguồn:**
+## 🚀 Cách Khởi Chạy
+1. Đảm bảo máy tính đã cài đặt .NET 8 SDK.
+2. Mở Terminal/Command Prompt tại thư mục chứa file `.csproj` (thư mục `TodoList`).
+3. Chạy lệnh:
    ```bash
-   git clone <url-cua-repository>
-   cd TodoList
+   dotnet build
+   dotnet run
    ```
+4. Ứng dụng sẽ tự động khởi tạo Database SQLite (`todo.db`) vào lần đầu tiên chạy.
 
-2. **Cấu hình Kết nối Cơ sở dữ liệu (Connection String):**
-   Mở file [appsettings.json](file:///c:/Users/huy/source/repos/TodoList/TodoList/appsettings.json) trong thư mục dự án và điều chỉnh chuỗi kết nối SQL Server của bạn:
-   ```json
-   {
-     "ConnectionStrings": {
-       "DefaultConnection": "Data Source=TEN_MAY_TINH\\SQLEXPRESS;Initial Catalog=PersonalTodoList;Trusted_Connection=SSPI;Encrypt=false;TrustServerCertificate=true"
-     }
-   }
-   ```
-
-3. **Cập nhật Cơ sở dữ liệu (Database Migration):**
-   Chạy lệnh sau tại thư mục chứa file Solution (`.sln`) để tự động tạo cấu trúc bảng dữ liệu trên SQL Server:
-   ```bash
-   dotnet ef database update --project TodoList
-   ```
-
-4. **Thiết lập Google Calendar API Credentials:**
-   - Truy cập Google Cloud Console, tạo một dự án OAuth 2.0 và cấp quyền truy cập dịch vụ Calendar API.
-   - Tải file cấu hình xác thực Client ID và Client Secret dưới dạng file JSON và đổi tên thành `credentials.json`.
-   - Sao chép file `credentials.json` và lưu vào thư mục: `TodoList/google calendar/credentials.json`.
-
-5. **Build và Chạy ứng dụng:**
-   Mở Solution bằng Visual Studio hoặc chạy lệnh:
-   ```bash
-   dotnet run --project TodoList
-   ```
-
-*Ghi chú: Lần đầu tiên bạn nhấn nút **Sync Google Calendar** (biểu tượng Google ở góc phải bên trên), trình duyệt web sẽ tự động bật lên yêu cầu bạn đăng nhập tài khoản Google để cấp quyền truy cập. Sau khi đồng ý, hệ thống sẽ tự động liên kết trơn tru dưới nền.*
-
----
-
-## 🧪 Hướng Dẫn Chạy Kiểm Thử (Unit Tests)
-
-Dự án có sẵn một bộ Unit Test tự động bao phủ đầy đủ các luồng logic quan trọng (luồng chính, luồng phụ và luồng ngoại lệ) của xác thực băm mật khẩu, CRUD nghiệp vụ Database và logic của ma trận Eisenhower.
-
-Để thực hiện chạy kiểm thử, mở cửa sổ dòng lệnh tại thư mục chứa file Solution và chạy lệnh:
-```bash
-dotnet test
-```
-
----
-
-## 📂 Cấu Trúc Thư Mục Dự Án
-
-```text
-TodoList/
-│
-├── TodoList/                      # Dự án mã nguồn chính (WPF Application)
-│   ├── Converters/                # Bộ chuyển đổi dữ liệu XAML (Value Converters)
-│   ├── Helpers/                   # Các thư viện phụ trợ (Mã hóa mật khẩu, v.v.)
-│   ├── Models/                    # Các thực thể dữ liệu (User, TaskItem, v.v.)
-│   ├── Providers/                 # DbContext kết nối SQL Server (EF Core)
-│   ├── Services/                  # Lớp xử lý nghiệp vụ & Google API Sync
-│   ├── ViewModels/                # Lớp logic giao diện (Dashboard, Eisenhower, v.v.)
-│   ├── Views/                     # Các file giao diện XAML (MainWindow, Dashboard, v.v.)
-│   └── google calendar/           # Thư mục lưu credentials.json kết nối lịch Google
-│
-├── TodoList.Tests/                # Dự án Unit Tests (xUnit)
-│   └── TodoListTests.cs           # Chứa các kịch bản kiểm thử tự động
-│
-└── TodoList.sln                   # File Solution quản lý dự án
-```
+## 🧠 Triết Lý Thiết Kế
+*“Không có người lười biếng, chỉ có hệ thống chưa đủ kích thích để não bộ bắt tay vào việc.”*
+Ứng dụng này không cố gắng biến bạn thành một cái máy vô tri, nó cố gắng trở thành một trợ lý hiểu rõ nhịp độ sinh học và những lúc "tụt mood" của bạn để đẩy bạn lên.
